@@ -1,4 +1,4 @@
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
+from typing import Any, Generic, Optional, Type, TypeVar
 
 from sqlalchemy import delete, select, update
 from sqlalchemy.exc import SQLAlchemyError
@@ -20,7 +20,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         self.model = model
         self.session = session
 
-    async def create(self, data: Dict[str, Any]) -> ModelType:
+    async def create(self, data: dict[str, Any]) -> ModelType:
         try:
             db_obj = self.model(**data)
 
@@ -51,7 +51,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             logger.error(f"Ошибка получения записи {id}: {str(e)}")
             raise
 
-    async def get_all(self, skip: int = 0, limit: int = 100) -> List[ModelType]:
+    async def get_all(self, skip: int = 0, limit: int = 100) -> list[ModelType]:
         try:
             query = select(self.model).offset(skip).limit(limit)
             result = await self.session.execute(query)
@@ -74,7 +74,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             logger.error(f"Ошибка получения по полю {field_name}: {str(e)}")
             raise
 
-    async def update(self, id: int, data: Dict[str, Any]) -> Optional[ModelType]:
+    async def update(self, id: int, data: dict[str, Any]) -> Optional[ModelType]:
         try:
             # Убираем значения None (они не обновляются)
             update_data = {k: v for k, v in data.items() if v is not None}

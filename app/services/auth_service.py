@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from app.core.config import settings
 from app.core.logger import get_logger
@@ -157,7 +157,7 @@ class AuthService:
     async def logout(self):
         pass
 
-    def _create_tokens(self, user: User) -> Dict[str, Any]:
+    def _create_tokens(self, user: User) -> dict[str, Any]:
         token_data = {
             "sub": str(user.id),
             "email": user.email,

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import select
@@ -22,7 +22,7 @@ class HabitRepository(BaseRepository[Habit, HabitCreate, HabitUpdate]):
         self, 
         user_id: UUID,
         only_active: bool = True
-    ) -> List[Habit]:
+    ) -> list[Habit]:
         try:
             query = select(self.model).where(self.model.user_id == user_id)
 

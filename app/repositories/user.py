@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 from uuid import UUID
 
 from sqlalchemy import delete, select, update
@@ -33,7 +33,7 @@ class UserRepository(BaseRepository[User, UserCreate, UserUpdate]):
     async def update(
         self, 
         id: UUID, 
-        data: Dict[str, Any]
+        data: dict[str, Any]
     ) -> Optional[User]:
         try:
             update_data = {k: v for k, v in data.items() if v is not None}

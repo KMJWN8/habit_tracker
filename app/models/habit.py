@@ -39,7 +39,7 @@ class Habit(Base):
     
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        server_default=func.now(),
+        server_default=func.timezone('UTC', func.now()),
         nullable=False
     )
     
@@ -68,7 +68,7 @@ class Habit(Base):
 
     user: Mapped["User"] = relationship("User", back_populates="habits")
 
-    trackings: Mapped[List["HabitTracking"]] = relationship(
+    trackings: Mapped[list["HabitTracking"]] = relationship(
         "HabitTracking",
         back_populates="habit",
         cascade="all, delete-orphan"
