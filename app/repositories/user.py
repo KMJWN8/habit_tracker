@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 from uuid import UUID
 
 from sqlalchemy import delete, select, update
@@ -17,11 +17,9 @@ class UserRepository(BaseRepository[User, UserCreate, UserUpdate]):
     def __init__(self, session: AsyncSession):
         super().__init__(User, session)
 
-    async def get(self, id: Union[str, UUID]) -> Optional[User]:
+    async def get(self, id: UUID) -> Optional[User]:
         try:
-            user_id = UUID(id) if isinstance(id, str) else id
-
-            query = select(self.model).where(self.model.id == user_id)
+            query = select(self.model).where(self.model.id == id)
             result = await self.session.execute(query)
             return result.scalar_one_or_none()
 
@@ -33,18 +31,18 @@ class UserRepository(BaseRepository[User, UserCreate, UserUpdate]):
             raise
 
     async def update(
-        self, id: Union[str, UUID], data: Dict[str, Any]
+        self, 
+        id: UUID, 
+        data: Dict[str, Any]
     ) -> Optional[User]:
         try:
-            user_id = UUID(id) if isinstance(id, str) else id
-
             update_data = {k: v for k, v in data.items() if v is not None}
             if not update_data:
-                return await self.get(user_id)
+                return await self.get(id)
 
             query = (
                 update(self.model)
-                .where(self.model.id == user_id)
+                .where(self.model.id == id)
                 .values(**update_data)
                 .returning(self.model)
             )
@@ -65,15 +63,13 @@ class UserRepository(BaseRepository[User, UserCreate, UserUpdate]):
             logger.error(f"Ошибка обновления пользователя {id}: {str(e)}")
             raise
 
-    async def delete(self, id: Union[str, UUID]) -> bool:
+    async def delete(self, id: UUID) -> bool:
         try:
-            user_id = UUID(id) if isinstance(id, str) else id
-
-            user = await self.get(user_id)
+            user = await self.get(id)
             if not user:
                 return False
 
-            query = delete(User).where(User.id == user_id)
+            query = delete(User).where(User.id == id)
             await self.session.execute(query)
             await self.session.commit()
 
@@ -93,6 +89,6 @@ class UserRepository(BaseRepository[User, UserCreate, UserUpdate]):
     async def get_by_username(self, username: str) -> Optional[User]:
         return await self.get_by_field("username", username)
 
-    async def exists(self, id: Union[str, UUID]) -> bool:
+    async def exists(self, id: UUID) -> bool:
         user = await self.get(id)
         return user is not None

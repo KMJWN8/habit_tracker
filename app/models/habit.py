@@ -3,7 +3,7 @@ from datetime import datetime, time
 from typing import Optional
 from sqlalchemy import String, Integer, Boolean, DateTime, Time, ForeignKey, Text
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from app.core.database import Base
@@ -64,6 +64,14 @@ class Habit(Base):
     reminder_time: Mapped[Optional[time]] = mapped_column(
         Time,
         nullable=True
+    )
+
+    user: Mapped["User"] = relationship("User", back_populates="habits")
+
+    trackings: Mapped[List["HabitTracking"]] = relationship(
+        "HabitTracking",
+        back_populates="habit",
+        cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:

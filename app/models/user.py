@@ -1,7 +1,7 @@
 import uuid
 from sqlalchemy import String, Integer, Boolean, DateTime
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from datetime import datetime
 
@@ -55,6 +55,12 @@ class User(Base):
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False
+    )
+
+    habits: Mapped[List["Habit"]] = relationship(
+        "Habit",
+        back_populates="user",
+        cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:

@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Optional
 
 from sqlalchemy import Date, DateTime, ForeignKey, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from app.core.database import Base
@@ -39,6 +39,8 @@ class HabitTracking(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+
+    habit: Mapped["Habit"] = relationship("Habit", back_populates="trackings")
 
     def __repr__(self) -> str:
         return f"HabitTracking(habit_id={self.habit_id}, date={self.date}, status={self.status})"
