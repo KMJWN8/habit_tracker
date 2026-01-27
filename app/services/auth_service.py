@@ -1,17 +1,18 @@
-from typing import Optional, Tuple
+from typing import Any, Dict, Optional
 
-from fastapi import Depends, HTTPException, status
-
+from app.core.config import settings
 from app.core.logger import get_logger
 from app.core.security import (
     create_access_token,
+    create_refresh_token,
     decode_token,
-    oauth2_scheme,
+    get_password_hash,
     verify_password,
 )
 from app.models.user import User
 from app.repositories.user import UserRepository
-from app.schemas.user import UserCreate
+from app.schemas.auth import LoginRequest, LoginResponse, RegisterResponse
+from app.schemas.user import UserCreate, UserResponse
 
 logger = get_logger(__name__)
 
@@ -19,16 +20,10 @@ logger = get_logger(__name__)
 class AuthService:
     def __init__(self, user_repository: UserRepository):
         self.user_repo = user_repository
-        logger.debug("AuthService initialized")
 
-    async def register(self, user_data: UserCreate) -> Tuple[User, str]:
-        """
-        Регистрация нового пользователя.
-        Возвращает (user, token)
-        """
+    async def register(self, user_data: UserCreate) -> RegisterResponse:
         logger.info(f"Registration attempt for: {user_data.email}")
 
-        # Проверяем уникальность email
         existing = await self.user_repo.get_by_email(user_data.email)
         if existing:
             logger.warning(
@@ -36,57 +31,59 @@ class AuthService:
             )
             raise ValueError("Email already registered")
 
-        # Проверяем уникальность username (если нужно)
-        if hasattr(user_data, "username"):
-            existing_username = await self.user_repo.get_by_username(user_data.username)
-            if existing_username:
-                logger.warning(
-                    f"Registration failed: username {user_data.username} already exists"
-                )
-                raise ValueError("Username already taken")
+        existing_username = await self.user_repo.get_by_username(user_data.username)
+        if existing_username:
+            logger.warning(
+                f"Registration failed: username {user_data.username} already exists"
+            )
+            raise ValueError("Username already taken")
 
-        # Создаем пользователя
         user_dict = user_data.model_dump(exclude={"password"})
-        user_dict["hashed_password"] = (
-            user_data.password
-        )  # Пароль будет хеширован в репозитории
+        user_dict["hashed_password"] = get_password_hash(user_data.password)
 
         user = await self.user_repo.create(user_dict)
 
-        # Создаем токен
-        token = self._create_token(user)
+        tokens = self._create_tokens(user)
 
         logger.info(f"User registered successfully: {user.id} ({user.email})")
-        return user, token
 
-    # ========== ЛОГИН ==========
+        return RegisterResponse(
+            access_token=tokens["access_token"],
+            refresh_token=tokens["refresh_token"],
+            token_type="bearer",
+            expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # в секундах
+            refresh_expires_in=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
+            user=UserResponse.model_validate(user),
+        )
 
-    async def login(self, email: str, password: str) -> Tuple[User, str]:
-        """
-        Аутентификация пользователя.
-        Возвращает (user, token) или бросает ValueError
-        """
-        logger.info(f"Login attempt for: {email}")
+    async def login(self, login_data: LoginRequest) -> LoginResponse:
+        logger.info(f"Login attempt for: {login_data.email}")
 
-        user = await self.user_repo.get_by_email(email)
+        user = await self.user_repo.get_by_email(login_data.email)
         if not user:
-            logger.warning(f"Login failed: user {email} not found")
+            logger.warning(f"Login failed: user {login_data.email} not found")
             raise ValueError("Invalid credentials")
 
-        if not verify_password(password, user.hashed_password):
-            logger.warning(f"Login failed: invalid password for {email}")
+        if not verify_password(login_data.password, user.hashed_password):
+            logger.warning(f"Login failed: invalid password for {login_data.email}")
             raise ValueError("Invalid credentials")
 
         if not user.is_active:
-            logger.warning(f"Login failed: user {email} is inactive")
+            logger.warning(f"Login failed: user {login_data.email} is inactive")
             raise ValueError("Account inactive")
 
-        token = self._create_token(user)
+        tokens = self._create_tokens(user)
 
-        logger.info(f"User logged in successfully: {user.id} ({email})")
-        return user, token
+        logger.info(f"User logged in successfully: {user.id} ({login_data.email})")
 
-    # ========== ВАЛИДАЦИЯ ТОКЕНА ==========
+        return LoginResponse(
+            access_token=tokens["access_token"],
+            refresh_token=tokens["refresh_token"],
+            token_type="bearer",
+            expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            refresh_expires_in=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
+            user=UserResponse.model_validate(user),
+        )
 
     async def validate_token(self, token: str) -> Optional[User]:
         """Валидация токена и получение пользователя"""
@@ -125,7 +122,7 @@ class AuthService:
 
         # Обновляем пароль
         await self.user_repo.update(
-            user.id, {"hashed_password": new_password}  # Репозиторий должен хешировать
+            user.id, {"hashed_password": get_password_hash(new_password)}
         )
 
         logger.info(f"Password changed successfully for user: {user.id}")
@@ -157,45 +154,19 @@ class AuthService:
         logger.info(f"User activated: {user_id}")
         return True
 
-    def _create_token(self, user: User) -> str:
-        """Создание JWT токена (внутренний метод)"""
-        token = create_access_token(data={"sub": str(user.id), "email": user.email})
-        logger.debug(f"Token created for user: {user.id}")
-        return token
+    def _create_tokens(self, user: User) -> Dict[str, Any]:
+        token_data = {
+            "sub": str(user.id),
+            "email": user.email,
+            "username": user.username,
+        }
 
+        access_token = create_access_token(data=token_data)
+        refresh_token = create_refresh_token(data=token_data)
 
-async def get_current_user(
-    token: str = Depends(oauth2_scheme), auth_service: "AuthService" = Depends()
-) -> User:
-    """
-    Зависимость: получить текущего пользователя из токена.
-    """
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
-        )
+        logger.debug(f"Tokens created for user: {user.id}")
 
-    user = await auth_service.validate_token(token)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token"
-        )
-
-    return user
-
-
-async def get_current_active_user(
-    current_user: User = Depends(get_current_user),
-) -> User:
-    """
-    Зависимость: получить текущего активного пользователя.
-    """
-    if not current_user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Account is inactive"
-        )
-    return current_user
-
-
-async def get_auth_service(user_repo: UserRepository = Depends()) -> AuthService:
-    return AuthService(user_repo)
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+        }
