@@ -18,6 +18,9 @@ class RegisterRequest(BaseModel):
     password: str = Field(..., min_length=8, max_length=100)
 
 
+class LogoutRequest(BaseModel):
+    pass
+
 class Token(BaseModel):
     """Базовая схема токена"""
     access_token: str

@@ -110,7 +110,7 @@ class AuthService:
     async def change_password(
         self, user: User, current_password: str, new_password: str
     ) -> bool:
-        """Смена пароля пользователя"""
+
         logger.info(f"Password change attempt for user: {user.id}")
 
         # Проверяем текущий пароль
@@ -153,6 +153,9 @@ class AuthService:
 
         logger.info(f"User activated: {user_id}")
         return True
+
+    async def logout(self):
+        pass
 
     def _create_tokens(self, user: User) -> Dict[str, Any]:
         token_data = {
