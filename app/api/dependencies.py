@@ -3,12 +3,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db_async_session
 from app.repositories.user import UserRepository
+from app.repositories.habit import HabitRepository
 from app.services.auth_service import AuthService
+from app.services.habit_service import HabitService
 from app.core.security import oauth2_scheme
 from app.models.user import User
 
 
-async def get_user_repository(db: AsyncSession = Depends(get_db_async_session)) -> UserRepository:
+async def get_user_repository(
+    db: AsyncSession = Depends(get_db_async_session)
+) -> UserRepository:
     return UserRepository(db)
 
 
@@ -17,6 +21,15 @@ async def get_auth_service(
 ) -> AuthService:
     return AuthService(user_repo)
 
+async def get_habit_repository(
+    db: AsyncSession = Depends(get_db_async_session)
+) -> HabitRepository:
+    return HabitRepository(db)
+
+async def get_habit_service(
+    habit_repo: HabitRepository = Depends(get_habit_repository)
+) -> HabitService:
+    return HabitService(habit_repo)
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
