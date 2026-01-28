@@ -10,7 +10,7 @@ from app.core.config import settings
 password_hash = PasswordHash.recommended()
 
 oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl=f"{settings.API_V1_STR}/auth/login", auto_error=False
+    tokenUrl=f"{settings.API_URL_PREFIX}/auth/login", auto_error=False
 )
 
 

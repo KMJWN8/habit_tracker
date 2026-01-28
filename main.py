@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1.endpoints.auth import router as auth_router
+from app.api.v1 import api_v1_router
 from app.core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -18,4 +18,4 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth_router)
+app.include_router(api_v1_router)

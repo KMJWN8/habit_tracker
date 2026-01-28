@@ -7,7 +7,8 @@ from app.services.auth_service import AuthService
 from app.core.config import settings
 from app.api.dependencies import get_auth_service, get_current_active_user
 
-router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
+
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
