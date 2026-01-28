@@ -93,4 +93,9 @@ class HabitService:
             return success
 
 
+        async def to_response(self, habit: Habit) -> HabitResponse:
+            return HabitResponse.model_validate(habit)
+
+        async def to_response_list(self, habits: list[Habit]) -> list[HabitResponse]:
+            return [HabitResponse.model_validate(habit) for habit in habits]
 

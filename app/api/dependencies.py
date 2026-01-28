@@ -4,8 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db_async_session
 from app.repositories.user import UserRepository
 from app.repositories.habit import HabitRepository
-from app.services.auth_service import AuthService
-from app.services.habit_service import HabitService
+from app.services.auth import AuthService
+from app.services.habit import HabitService
 from app.core.security import oauth2_scheme
 from app.models.user import User
 
