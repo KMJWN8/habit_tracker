@@ -7,7 +7,10 @@ from app.schemas.habit import (
 from app.services.habit import HabitService
 from app.models.user import User
 from app.api.dependencies import get_current_active_user, get_habit_service
+from app.core.logger import get_logger
 
+
+logger = get_logger(__name__)
 
 router = APIRouter(prefix="/habits", tags=["habits"])
 
