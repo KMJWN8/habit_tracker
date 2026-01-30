@@ -9,10 +9,15 @@ from app.core.security import (
     get_password_hash,
     verify_password,
 )
-from app.models.user import User
-from app.repositories.user import UserRepository
-from app.schemas.auth import LoginRequest, LoginResponse, RegisterResponse
-from app.schemas.user import UserCreate, UserResponse
+from app.models import User
+from app.repositories import UserRepository
+from app.schemas import (
+    LoginRequest,
+    LoginResponse,
+    RegisterResponse,
+    UserCreate,
+    UserResponse,
+)
 
 logger = get_logger(__name__)
 

@@ -1,7 +1,9 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from pathlib import Path
 
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
 BASE_DIR = Path(__file__).parent.parent.parent
+
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Atomic Habits Tracker API"
@@ -9,7 +11,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
 
     API_URL_PREFIX: str = "http://localhost:8000"
-    
+
     ENVIRONMENT: str = "development"  # development, staging, production
     DEBUG: bool = True
 
@@ -23,7 +25,7 @@ class Settings(BaseSettings):
     DB_PASS: str
     DB_NAME: str
 
-    #server
+    # server
     HOST: str = "0.0.0.0"
     PORT: int = 8000
 
@@ -32,9 +34,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     REFRESH_TOKEN_EXPIRE_DAYS: int
 
+    model_config = SettingsConfigDict(env_file=BASE_DIR / ".env")
 
-    model_config = SettingsConfigDict(
-        env_file=BASE_DIR / '.env'
-    )
 
 settings = Settings()

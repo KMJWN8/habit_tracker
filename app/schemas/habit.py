@@ -1,7 +1,8 @@
-from pydantic import BaseModel, ConfigDict, Field, validator
-from typing import Optional
 import uuid
 from datetime import datetime, time
+from typing import Optional
+
+from pydantic import BaseModel, ConfigDict, Field, validator
 
 
 class HabitBase(BaseModel):
@@ -24,9 +25,9 @@ class HabitUpdate(BaseModel):
     reminder_time: Optional[time] = None
     is_active: Optional[bool] = None
 
-    @validator('color')
+    @validator("color")
     def validate_color(cls, v):
-        if v and not v.startswith('#'):
+        if v and not v.startswith("#"):
             return f"#{v}"
         return v
 
@@ -36,5 +37,5 @@ class HabitResponse(HabitBase):
     user_id: uuid.UUID
     is_active: bool = True
     created_at: datetime
-    
+
     model_config = ConfigDict(from_attributes=True)

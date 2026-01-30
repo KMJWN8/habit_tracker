@@ -37,7 +37,9 @@ class HabitTracking(Base):
     notes: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.timezone('UTC', func.now()), nullable=False
+        DateTime(timezone=True),
+        server_default=func.timezone("UTC", func.now()),
+        nullable=False,
     )
 
     habit: Mapped["Habit"] = relationship("Habit", back_populates="trackings")

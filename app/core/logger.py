@@ -2,7 +2,6 @@ import logging
 import sys
 from pathlib import Path
 
-# Создаем папку для логов
 LOG_DIR = Path("logs")
 LOG_DIR.mkdir(exist_ok=True)
 
@@ -34,6 +33,3 @@ def get_logger(name: str = None):
 
     # Иначе добавляем префикс
     return logging.getLogger(f"app.{name}")
-
-
-__all__ = ["get_logger", "logger"]

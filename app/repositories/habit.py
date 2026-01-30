@@ -1,15 +1,14 @@
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import and_, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logger import get_logger
-from app.models.habit import Habit
-from app.repositories.base import BaseRepository
-from app.schemas.habit import HabitCreate, HabitUpdate
-
+from app.models import Habit
+from app.repositories import BaseRepository
+from app.schemas import HabitCreate, HabitUpdate
 
 logger = get_logger(__name__)
 
@@ -18,11 +17,7 @@ class HabitRepository(BaseRepository[Habit, HabitCreate, HabitUpdate]):
     def __init__(self, session: AsyncSession):
         super().__init__(Habit, session)
 
-    async def get_all(
-        self, 
-        user_id: UUID,
-        only_active: bool = True
-    ) -> list[Habit]:
+    async def get_all(self, user_id: UUID, only_active: bool = True) -> list[Habit]:
         try:
             query = select(self.model).where(self.model.user_id == user_id)
 
@@ -40,17 +35,10 @@ class HabitRepository(BaseRepository[Habit, HabitCreate, HabitUpdate]):
             )
             raise
 
-    async def get(
-        self, 
-        user_id: UUID, 
-        habit_id: int
-    ) -> Habit:
+    async def get(self, user_id: UUID, habit_id: int) -> Habit:
         try:
             query = select(self.model).where(
-                and_(
-                    self.model.user_id == user_id, 
-                    self.model.id == habit_id
-                )
+                and_(self.model.user_id == user_id, self.model.id == habit_id)
             )
 
             result = await self.session.execute(query)
@@ -58,13 +46,8 @@ class HabitRepository(BaseRepository[Habit, HabitCreate, HabitUpdate]):
         except SQLAlchemyError as e:
             logger.error(f"Ошибка получения привычки пользователя {user_id}: {e}")
             raise
-    
 
-    async def create_with_user(
-        self,
-        user_id: UUID,
-        habit_data: dict
-    ) -> Habit:
+    async def create_with_user(self, user_id: UUID, habit_data: dict) -> Habit:
         try:
             habit_data["user_id"] = user_id
             return await self.create(habit_data)
@@ -73,12 +56,8 @@ class HabitRepository(BaseRepository[Habit, HabitCreate, HabitUpdate]):
             logger.error(f"Ошибка создания привычки для пользователя {user_id}: {e}")
             raise
 
-    
     async def update_user_habit(
-        self,
-        user_id: UUID,
-        habit_id: int,
-        update_data: dict
+        self, user_id: UUID, habit_id: int, update_data: dict
     ) -> Optional[Habit]:
         try:
             habit = await self.get(user_id, habit_id)
@@ -91,20 +70,15 @@ class HabitRepository(BaseRepository[Habit, HabitCreate, HabitUpdate]):
             logger.error(f"Error updating habit {habit_id} for user {user_id}: {e}")
             raise
 
-
-    async def delete_user_habit(
-        self,
-        user_id: UUID,
-        habit_id: int
-    ) -> bool:
+    async def delete_user_habit(self, user_id: UUID, habit_id: int) -> bool:
         try:
-            #Обновляем is_active на False вместо физического удаления
-            updated = await self.update_user_habit(user_id, habit_id, {"is_active": False})
+            # Обновляем is_active на False вместо физического удаления
+            updated = await self.update_user_habit(
+                user_id, habit_id, {"is_active": False}
+            )
 
             return updated is not None
-        
+
         except SQLAlchemyError as e:
             logger.error(f"Error deleting habit {habit_id} for user {user_id}: {e}")
             raise
-
-    

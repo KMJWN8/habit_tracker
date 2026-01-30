@@ -1,66 +1,48 @@
 import uuid
-from sqlalchemy import String, Integer, Boolean, DateTime
+from datetime import datetime
+
+from sqlalchemy import Boolean, DateTime, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
-from datetime import datetime
 
 from app.core.database import Base
 
 
 class User(Base):
-        
+
     __tablename__ = "users"
-    
+
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
         nullable=False,
-        index=True
+        index=True,
     )
-    
+
     username: Mapped[str] = mapped_column(
-        String(50),
-        unique=True,
-        nullable=False,
-        index=True
+        String(50), unique=True, nullable=False, index=True
     )
-    
+
     email: Mapped[str] = mapped_column(
-        String(100),
-        unique=True,
-        nullable=False,
-        index=True
+        String(100), unique=True, nullable=False, index=True
     )
-    
-    hashed_password: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False
-    )
-    
-    streak_days: Mapped[int] = mapped_column(
-        Integer,
-        default=0,
-        nullable=False
-    )
-    
-    is_active: Mapped[bool] = mapped_column(
-        Boolean,
-        default=True,
-        nullable=False
-    )
-    
+
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    streak_days: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        server_default=func.timezone('UTC', func.now()),
-        nullable=False
+        server_default=func.timezone("UTC", func.now()),
+        nullable=False,
     )
 
     habits: Mapped[list["Habit"]] = relationship(
-        "Habit",
-        back_populates="user",
-        cascade="all, delete-orphan"
+        "Habit", back_populates="user", cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:

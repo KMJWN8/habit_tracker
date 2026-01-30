@@ -6,9 +6,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logger import get_logger
-from app.models.user import User
-from app.repositories.base import BaseRepository
-from app.schemas.user import UserCreate, UserUpdate
+from app.models import User
+from app.repositories import BaseRepository
+from app.schemas import UserCreate, UserUpdate
 
 logger = get_logger(__name__)
 
@@ -30,11 +30,7 @@ class UserRepository(BaseRepository[User, UserCreate, UserUpdate]):
             logger.error(f"Ошибка БД при получении пользователя {id}: {str(e)}")
             raise
 
-    async def update(
-        self, 
-        id: UUID, 
-        data: dict[str, Any]
-    ) -> Optional[User]:
+    async def update(self, id: UUID, data: dict[str, Any]) -> Optional[User]:
         try:
             update_data = {k: v for k, v in data.items() if v is not None}
             if not update_data:
