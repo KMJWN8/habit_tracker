@@ -1,0 +1,21 @@
+# Web Framework
+fastapi
+uvicorn[standard]
+
+# Database
+sqlalchemy[asyncio]
+alembic
+
+# Validation
+pydantic[email]
+pydantic-settings
+email-validator
+
+# Authentication
+python-jose[cryptography]
+PyJWT
+pwdlib[bcrypt]
+
+# Utils
+python-multipart
+python-dotenv

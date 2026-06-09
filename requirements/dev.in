@@ -1,0 +1,16 @@
+-r base.in
+
+# Testing
+pytest
+pytest-asyncio
+pytest-cov
+httpx
+pytest-mock
+
+# Code quality
+ruff
+mypy
+pre-commit
+
+# Debug
+ipdb
