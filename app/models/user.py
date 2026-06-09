@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Integer, String
+from sqlalchemy import String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -16,30 +16,23 @@ class User(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
-        default=uuid.uuid4,
-        nullable=False,
+        server_default=func.gen_random_uuid(),
         index=True,
     )
 
     username: Mapped[str] = mapped_column(
-        String(50), unique=True, nullable=False, index=True
+        String(50), unique=True, index=True
     )
 
-    email: Mapped[str] = mapped_column(
-        String(100), unique=True, nullable=False, index=True
-    )
+    email: Mapped[str] = mapped_column(String(100), unique=True, index=True)
 
-    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String(255))
 
-    streak_days: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    streak_days: Mapped[int] = mapped_column(default=0)
 
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    is_active: Mapped[bool] = mapped_column(default=True)
 
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.timezone("UTC", func.now()),
-        nullable=False,
-    )
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
     habits: Mapped[list["Habit"]] = relationship(
         "Habit", back_populates="user", cascade="all, delete-orphan"

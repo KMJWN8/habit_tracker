@@ -1,4 +1,3 @@
-from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import and_, select
@@ -6,34 +5,36 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logger import get_logger
+from app.core.exceptions import NotFoundError, DatabaseError
 from app.models import Habit
-from app.repositories import BaseRepository
-from app.schemas import HabitCreate, HabitUpdate
 
 logger = get_logger(__name__)
 
 
-class HabitRepository(BaseRepository[Habit, HabitCreate, HabitUpdate]):
+class HabitRepository:
     def __init__(self, session: AsyncSession):
-        super().__init__(Habit, session)
+        self.session = session
+        self.model = Habit
 
     async def get_all(self, user_id: UUID, only_active: bool = True) -> list[Habit]:
         try:
             query = select(self.model).where(self.model.user_id == user_id)
 
             if only_active:
-                query = query.where(self.model.is_active == True)
+                query = query.where(self.model.is_active.is_(True))
 
             query = query.order_by(self.model.created_at.desc())
 
             result = await self.session.execute(query)
-            return list(result.scalars.all())
+            return list(result.scalars().all())
 
         except SQLAlchemyError as e:
             logger.error(
-                f"Ошибка получения списка привычек пользователя {user_id}: {e}"
+                "Failed to fetch habits | user_id=%s | only_active=%s | error=%s",
+                user_id, only_active, e
             )
-            raise
+            # Оборачиваем в доменную ошибку
+            raise DatabaseError("Failed to fetch habits") from e
 
     async def get(self, user_id: UUID, habit_id: int) -> Habit:
         try:
@@ -42,43 +43,77 @@ class HabitRepository(BaseRepository[Habit, HabitCreate, HabitUpdate]):
             )
 
             result = await self.session.execute(query)
-            return result.scalar_one_or_none()
-        except SQLAlchemyError as e:
-            logger.error(f"Ошибка получения привычки пользователя {user_id}: {e}")
-            raise
-
-    async def create_with_user(self, user_id: UUID, habit_data: dict) -> Habit:
-        try:
-            habit_data["user_id"] = user_id
-            return await self.create(habit_data)
-
-        except SQLAlchemyError as e:
-            logger.error(f"Ошибка создания привычки для пользователя {user_id}: {e}")
-            raise
-
-    async def update_user_habit(
-        self, user_id: UUID, habit_id: int, update_data: dict
-    ) -> Optional[Habit]:
-        try:
-            habit = await self.get(user_id, habit_id)
+            habit = result.scalar_one_or_none()
+        
             if not habit:
-                return None
-
-            return await self.update(habit_id, update_data)
-
+                raise NotFoundError("Habit")
+            return habit
+        
         except SQLAlchemyError as e:
-            logger.error(f"Error updating habit {habit_id} for user {user_id}: {e}")
-            raise
-
-    async def delete_user_habit(self, user_id: UUID, habit_id: int) -> bool:
-        try:
-            # Обновляем is_active на False вместо физического удаления
-            updated = await self.update_user_habit(
-                user_id, habit_id, {"is_active": False}
+            logger.error(
+                "Failed to fetch habit | user_id=%s | habit_id=%s | error=%s",
+                user_id, habit_id, e
             )
+            raise DatabaseError("Failed to fetch habit") from e
 
-            return updated is not None
+    async def create(self, user_id: UUID, data: dict) -> Habit:
+        try:
+            data["user_id"] = user_id
+            habit = self.model(**data)
+            self.session.add(habit)
+            await self.session.commit()
+            await self.session.refresh(habit)
+            
+            logger.info("Habit created | user_id=%s | habit_id=%s",
+                        user_id, habit.id
+            )
+            return habit
 
         except SQLAlchemyError as e:
-            logger.error(f"Error deleting habit {habit_id} for user {user_id}: {e}")
-            raise
+            await self.session.rollback()
+            logger.error("Failed to create habit | user_id=%s | error=%s",
+                         user_id, e
+            )
+            raise DatabaseError("Failed to create habit") from e
+
+    async def update(
+        self, user_id: UUID, habit_id: int, data: dict
+    ) -> Habit:
+        habit = await self.get(user_id, habit_id)
+
+        try:
+            for key, value in data.items():
+                setattr(habit, key, value)
+
+            await self.session.commit()
+            await self.session.refresh(habit)
+
+            logger.info("Habit updated | user_id=%s | habit_id=%s",
+                        user_id, habit_id
+            )
+            return habit
+
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            logger.error("Failed to update habit | user_id=%s | habit_id=%s | error=%s",
+                         user_id, habit_id, e
+            )
+            raise DatabaseError("Failed to update habit") from e
+
+    async def delete(self, user_id: UUID, habit_id: int) -> bool:
+        habit = await self.get(user_id, habit_id)
+
+        try:
+            habit.is_active = False
+            await self.session.commit()
+
+            logger.info("Habit deleted (soft) | user_id=%s | habit_id=%s",
+                        user_id, habit_id
+            )
+            return True
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            logger.error("Failed to delete habit | user_id=%s | habit_id=%s | error=%s",
+                         user_id, habit_id, e
+            )
+            raise DatabaseError("Failed to delete habit") from e

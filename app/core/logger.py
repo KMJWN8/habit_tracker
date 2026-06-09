@@ -1,35 +1,38 @@
 import logging
 import sys
+import time
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 LOG_DIR = Path("logs")
 LOG_DIR.mkdir(exist_ok=True)
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(name)-20s | %(levelname)-8s | %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler(LOG_DIR / "app.log", encoding="utf-8"),
-    ],
-)
+# Перевод времени логов в UTC
+logging.Formatter.converter = time.gmtime
 
-# Создаем корневой логгер
-logger = logging.getLogger("app")
+def setup_logging():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s | %(name)-25s | %(levelname)-8s | %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        handlers=[
+            logging.StreamHandler(sys.stdout),
+            RotatingFileHandler(
+                LOG_DIR / "app.log",
+                maxBytes=10 * 1024 * 1024,
+                backupCount=5,
+                encoding="utf-8",
+            ),
+        ],
+        force=True,
+    )
 
-# Настраиваем логгеры сторонних библиотек
-logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
-logging.getLogger("uvicorn").setLevel(logging.WARNING)
-logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+    # Глушим "шумные" библиотеки, чтобы не засорять логи
+    logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
+    logging.getLogger("uvicorn").setLevel(logging.WARNING)
+    logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+    logging.getLogger("passlib").setLevel(logging.WARNING)
 
 
-def get_logger(name: str = None):
-    if name is None:
-        return logger
-
-    # Если имя уже содержит 'app.', используем как есть
-    if name.startswith("app."):
-        return logging.getLogger(name)
-
-    # Иначе добавляем префикс
-    return logging.getLogger(f"app.{name}")
+def get_logger(name: str) -> logging.Logger:
+    return logging.getLogger(name)

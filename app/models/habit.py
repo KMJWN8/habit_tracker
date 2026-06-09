@@ -1,8 +1,7 @@
 import uuid
 from datetime import datetime, time
-from typing import Optional
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, Time
+from sqlalchemy import ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -16,33 +15,30 @@ class Habit(Base):
     __tablename__ = "habits"
 
     id: Mapped[int] = mapped_column(
-        Integer, primary_key=True, nullable=False, index=True
+        primary_key=True, index=True
     )
 
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=False,
         index=True,
     )
 
-    title: Mapped[str] = mapped_column(String(100), nullable=False)
+    title: Mapped[str] = mapped_column(String(100))
 
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None]
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.timezone("UTC", func.now()),
-        nullable=False,
+        server_default=func.now(),
     )
 
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    is_active: Mapped[bool] = mapped_column(default=True)
 
-    color: Mapped[str] = mapped_column(String(7), default="#3B82F6", nullable=False)
+    color: Mapped[str] = mapped_column(String(7), default="#3B82F6")
 
-    goal_streak: Mapped[int] = mapped_column(Integer, default=21, nullable=False)
+    goal_streak: Mapped[int] = mapped_column(default=21)
 
-    reminder_time: Mapped[Optional[time]] = mapped_column(Time, nullable=True)
+    reminder_time: Mapped[time | None]
 
     user: Mapped["User"] = relationship("User", back_populates="habits")
 

@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db_async_session
+from app.core.database import get_async_session
 from app.core.security import oauth2_scheme
 from app.models import User
 from app.repositories import HabitRepository, UserRepository
@@ -9,7 +9,7 @@ from app.services import AuthService, HabitService
 
 
 async def get_user_repository(
-    db: AsyncSession = Depends(get_db_async_session),
+    db: AsyncSession = Depends(get_async_session),
 ) -> UserRepository:
     return UserRepository(db)
 
@@ -21,7 +21,7 @@ async def get_auth_service(
 
 
 async def get_habit_repository(
-    db: AsyncSession = Depends(get_db_async_session),
+    db: AsyncSession = Depends(get_async_session),
 ) -> HabitRepository:
     return HabitRepository(db)
 

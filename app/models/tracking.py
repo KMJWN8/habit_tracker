@@ -1,9 +1,7 @@
-from datetime import date as data
-from datetime import datetime
+import datetime
 from enum import Enum
-from typing import Optional
 
-from sqlalchemy import Date, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Enum as SQLEnum, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
@@ -20,26 +18,24 @@ class HabitTracking(Base):
 
     __tablename__ = "habit_tracking"
 
-    id: Mapped[int] = mapped_column(
-        Integer, primary_key=True, nullable=False, index=True
-    )
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
 
     habit_id: Mapped[int] = mapped_column(
-        ForeignKey("habits.id", ondelete="CASCADE"), nullable=False, index=True
+        ForeignKey("habits.id", ondelete="CASCADE"),
+        index=True
     )
 
-    date: Mapped[data] = mapped_column(Date, nullable=False, index=True)
+    date: Mapped[datetime.date] = mapped_column(index=True)
 
-    status: Mapped[str] = mapped_column(
-        String(10), nullable=False, default=HabitStatus.COMPLETED.value
+    status: Mapped[HabitStatus] = mapped_column(
+        SQLEnum(HabitStatus, native_enum=False),
+        default=HabitStatus.COMPLETED
     )
 
-    notes: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    notes: Mapped[str | None] = mapped_column(String(500))
 
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.timezone("UTC", func.now()),
-        nullable=False,
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        server_default=func.now(),
     )
 
     habit: Mapped["Habit"] = relationship("Habit", back_populates="trackings")

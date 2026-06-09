@@ -5,7 +5,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from app.api.v1 import api_v1_router
 from app.core.config import settings
-from app.core.logger import get_logger
+from app.core.logger import setup_logging, get_logger
 
 
 logger = get_logger(__name__)
@@ -13,6 +13,7 @@ logger = get_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    setup_logging()
     logger.info("Starting application...")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
     logger.info(f"Debug mode: {settings.DEBUG}")

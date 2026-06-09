@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.models.tracking import HabitStatus
 
 
-class HabitTrackingSchema(BaseModel):
+class HabitTracking(BaseModel):
     id: int | None = None
     habit_id: int = Field(..., gt=0)
     date: date

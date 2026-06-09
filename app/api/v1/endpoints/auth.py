@@ -1,12 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 
 from app.api.dependencies import get_auth_service, get_current_active_user
 from app.models import User
 from app.schemas import (
     LoginRequest,
-    LoginResponse,
-    LogoutRequest,
-    RegisterResponse,
+    RefreshTokenRequest,
+    TokenResponse,
     UserCreate,
     UserResponse,
 )
@@ -15,52 +14,38 @@ from app.services import AuthService
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/register", status_code=status.HTTP_201_CREATED)
+@router.post("/register", status_code=status.HTTP_201_CREATED, response_model=TokenResponse)
 async def register(
-    user_data: UserCreate, auth_service: AuthService = Depends(get_auth_service)
-) -> RegisterResponse:
-    try:
-        return await auth_service.register(user_data)
-
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error",
-        )
+    user_data: UserCreate, 
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    return await auth_service.register(user_data)
 
 
-@router.post("/login")
+@router.post("/login", response_model=TokenResponse)
 async def login(
-    login_data: LoginRequest, auth_service: AuthService = Depends(get_auth_service)
-) -> LoginResponse:
-    try:
-        return await auth_service.login(login_data)
-
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+    login_data: LoginRequest, 
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    return await auth_service.login(login_data)
 
 
-@router.post("/logout")
+@router.post("/refresh", response_model=TokenResponse)
+async def refresh_tokens(
+    request: RefreshTokenRequest,
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    return await auth_service.refresh_tokens(request.refresh_token)
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(
-    request: LogoutRequest, auth_service: AuthService = Depends(get_auth_service)
-) -> dict[str, str]:
-    try:
-        success = await auth_service.logout(request.refresh_token)
-        if success:
-            return {"message": "Succesfully logged out"}
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Logout failed"
-        )
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error",
-        )
+    request: RefreshTokenRequest,
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    await auth_service.logout(request.refresh_token)
 
 
-@router.get("/me")
-async def get_me(current_user: User = Depends(get_current_active_user)) -> UserResponse:
-    return UserResponse.model_validate(current_user)
+@router.get("/me", response_model=UserResponse)
+async def get_me(current_user: User = Depends(get_current_active_user)):
+    return current_user

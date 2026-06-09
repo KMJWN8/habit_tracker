@@ -1,24 +1,29 @@
 from typing import AsyncGenerator
 
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import declarative_base
+from datetime import datetime
+from sqlalchemy import DateTime
+from sqlalchemy.ext.asyncio import AsyncAttrs, AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase
 
 from app.core.config import settings
 
-DATABASE_URL = f"postgresql+asyncpg://{settings.DB_USER}:{settings.DB_PASS}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
 
-engine = create_async_engine(DATABASE_URL, echo=True)
+engine = create_async_engine(settings.db.DATABASE_URL, echo=settings.DEBUG)
 
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,
     class_=AsyncSession,
     expire_on_commit=False,
-    autocommit=False,
-    autoflush=False,
 )
 
 
-async def get_db_async_session() -> AsyncGenerator[AsyncSession, None]:
+class Base(AsyncAttrs, DeclarativeBase):
+    type_annotation_map = {
+        datetime: DateTime(timezone=True)
+    }
+
+
+async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
         try:
             yield session
@@ -29,4 +34,4 @@ async def get_db_async_session() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
-Base = declarative_base()
+
