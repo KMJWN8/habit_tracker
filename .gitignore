@@ -2,7 +2,24 @@ myenv/
 
 .env
 
-__pycache__
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
 
+.vscode/
 
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
 logs/
+*.log
+
+# Database
+*.db
