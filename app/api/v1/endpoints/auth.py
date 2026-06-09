@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, status
 from app.api.dependencies import get_auth_service, get_current_active_user
 from app.models import User
 from app.schemas import (
+    ChangePasswordRequest,
     LoginRequest,
     RefreshTokenRequest,
     TokenResponse,
@@ -36,6 +37,19 @@ async def refresh_tokens(
     auth_service: AuthService = Depends(get_auth_service)
 ):
     return await auth_service.refresh_tokens(request.refresh_token)
+
+
+@router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)
+async def change_password(
+    request: ChangePasswordRequest,
+    current_user: User = Depends(get_current_active_user),
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    await auth_service.change_password(
+        current_user, 
+        request.current_password, 
+        request.new_password
+    )
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)

@@ -1,13 +1,9 @@
 from .auth import (
     ChangePasswordRequest,
-    ForgotPasswordRequest,
     LoginRequest,
     TokenResponse,
     RefreshTokenRequest,
-    RefreshTokenResponse,
-    RegisterRequest,
-    RegisterResponse,
 )
 from .habit import HabitCreate, HabitResponse, HabitUpdate
-from .tracking import HabitTrackingSchema
+from .tracking import HabitTracking
 from .user import UserCreate, UserResponse, UserUpdate
