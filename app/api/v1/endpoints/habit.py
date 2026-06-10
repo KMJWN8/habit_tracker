@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, Path, Query, status
 
 from app.api.dependencies import get_current_active_user, get_habit_service
 from app.core.logger import get_logger
-from app.models import User
-from app.schemas import HabitCreate, HabitResponse, HabitUpdate
-from app.services import HabitService
+from app.models.user import User
+from app.schemas.habit import HabitCreate, HabitResponse, HabitUpdate
+from app.services.habit import HabitService
 
 logger = get_logger(__name__)
 

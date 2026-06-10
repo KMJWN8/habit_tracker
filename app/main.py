@@ -44,7 +44,7 @@ def create_application() -> FastAPI:
 
     application = FastAPI(
         title=settings.PROJECT_NAME,
-        description="Atomic Habits Tracker API",
+        description="Atomic Habits Tracker",
         version=settings.VERSION,
         openapi_url=f"{settings.API_V1_STR}/openapi.json" if settings.ENVIRONMENT != "production" else None,
         docs_url="/docs" if settings.ENVIRONMENT != "production" else None,

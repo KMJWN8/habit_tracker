@@ -3,6 +3,8 @@ fastapi
 uvicorn[standard]
 
 # Database
+asyncpg
+psycopg2-binary
 sqlalchemy[asyncio]
 alembic
 
@@ -14,7 +16,7 @@ email-validator
 # Authentication
 python-jose[cryptography]
 PyJWT
-pwdlib[bcrypt]
+pwdlib[argon2]
 
 # Utils
 python-multipart

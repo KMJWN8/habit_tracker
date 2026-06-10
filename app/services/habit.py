@@ -1,8 +1,9 @@
 from app.core.logger import get_logger
 from app.core.exceptions import BusinessError
-from app.models import Habit, User
-from app.repositories import HabitRepository
-from app.schemas import HabitCreate, HabitUpdate
+from app.models.habit import Habit
+from app.models.user import User
+from app.repositories.habit import HabitRepository
+from app.schemas.habit import HabitCreate, HabitUpdate
 
 logger = get_logger(__name__)
 

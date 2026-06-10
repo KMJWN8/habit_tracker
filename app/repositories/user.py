@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logger import get_logger
 from app.core.exceptions import NotFoundError, DatabaseError
-from app.models import User
+from app.models.user import User
 
 logger = get_logger(__name__)
 

@@ -5,6 +5,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).parent.parent.parent
 
+settings_config = SettingsConfigDict(
+    env_file=BASE_DIR / ".env",
+    env_file_encoding="utf-8",
+    extra="ignore",
+    populate_by_name=True,  # Позволяет использовать alias при загрузке из env
+)
+
 
 class DbSettings(BaseSettings):
     HOST: str = Field(alias="DB_HOST")
@@ -12,6 +19,8 @@ class DbSettings(BaseSettings):
     USER: str = Field(alias="DB_USER")
     PASS: str = Field(alias="DB_PASS")
     NAME: str = Field(alias="DB_NAME")
+
+    model_config = settings_config
 
     @computed_field
     @property
@@ -25,10 +34,12 @@ class AuthSettings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
 
+    model_config = settings_config
+
 
 class Settings(BaseSettings):
     # Общие настройки проекта
-    PROJECT_NAME: str = "Atomic Habits Tracker API"
+    PROJECT_NAME: str = "Atomic Habits Tracker"
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
     API_URL_PREFIX: str = "http://localhost:8000"
@@ -48,11 +59,7 @@ class Settings(BaseSettings):
     db: DbSettings = Field(default_factory=DbSettings)
     auth: AuthSettings = Field(default_factory=AuthSettings)
 
-    model_config = SettingsConfigDict(
-        env_file=BASE_DIR / ".env",
-        env_file_encoding="utf-8",
-        extra="ignore" # Игнорировать лишние переменные в .env
-    )
+    model_config = settings_config
 
 
 settings = Settings()
