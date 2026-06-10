@@ -145,7 +145,7 @@ class AuthService:
             access_token=create_access_token(data=token_data),
             refresh_token=create_refresh_token(data=token_data),
             token_type="bearer",
-            expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-            refresh_expires_in=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
+            expires_in=settings.auth.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            refresh_expires_in=settings.auth.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
             user=UserResponse.model_validate(user),
         )

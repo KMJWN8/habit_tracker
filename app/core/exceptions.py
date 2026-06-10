@@ -41,7 +41,7 @@ class BusinessError(AppError):
         super().__init__(message=message, status_code=HTTPStatus.BAD_REQUEST.value)
 
 
-class ConflictError(BusinessError):
+class ConflictError(AppError):
     """409"""    
     def __init__(self, message: str = "Resource conflict"):
         super().__init__(message=message, status_code=HTTPStatus.CONFLICT.value)
