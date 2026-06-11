@@ -1,0 +1,106 @@
+services:
+  # ---------------------------------------------------------
+  # База данных PostgreSQL
+  # ---------------------------------------------------------
+  db:
+    image: postgres:15-alpine
+    container_name: habit_tracker_db
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ---------------------------------------------------------
+  # Redis (Broker для Celery + кэш)
+  # ---------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: habit_tracker_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # ---------------------------------------------------------
+  # Основное приложение FastAPI
+  # ---------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: habit_tracker_api
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      # Монтирование кода для горячей перезагрузки (Только для разработки!)
+      - .:/app
+    # Команда перезаписывает CMD из Dockerfile, но entrypoint.sh (с миграциями) выполнится
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+
+  # ---------------------------------------------------------
+  # Celery Worker (фоновые задачи: email, вебхуки)
+  # ---------------------------------------------------------
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: habit_tracker_worker
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+      - api
+    volumes:
+      - .:/app
+    # Запуск воркера. Укажи правильный путь к твоему celery_app
+    command: celery -A app.core.celery_app worker --loglevel=info --concurrency=2
+    restart: unless-stopped
+
+  # ---------------------------------------------------------
+  # Celery Beat (планировщик периодических задач)
+  # ---------------------------------------------------------
+  beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: habit_tracker_beat
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - worker
+    volumes:
+      - .:/app
+    command: celery -A app.core.celery_app beat --loglevel=info
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

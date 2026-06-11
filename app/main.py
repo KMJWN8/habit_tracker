@@ -46,7 +46,7 @@ def create_application() -> FastAPI:
         title=settings.PROJECT_NAME,
         description="Atomic Habits Tracker",
         version=settings.VERSION,
-        openapi_url=f"{settings.API_V1_STR}/openapi.json" if settings.ENVIRONMENT != "production" else None,
+        openapi_url=f"{settings.API_VERSION_STR}/openapi.json" if settings.ENVIRONMENT != "production" else None,
         docs_url="/docs" if settings.ENVIRONMENT != "production" else None,
         redoc_url="/redoc" if settings.ENVIRONMENT != "production" else None,
         lifespan=lifespan,
@@ -85,7 +85,7 @@ def setup_routers(application: FastAPI) -> None:
     # Основной API v1 роутер
     application.include_router(
         api_v1_router,
-        prefix=settings.API_V1_STR,
+        prefix=settings.API_VERSION_STR,
     )
     
     
@@ -97,7 +97,7 @@ def setup_routers(application: FastAPI) -> None:
             "message": f"Welcome to {settings.PROJECT_NAME} API",
             "version": settings.VERSION,
             "docs": "/docs",
-            "api_v1": settings.API_V1_STR,
+            "api_v1": settings.API_VERSION_STR,
         }
 
 

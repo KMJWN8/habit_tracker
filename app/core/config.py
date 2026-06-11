@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     # Общие настройки проекта
     PROJECT_NAME: str = "Atomic Habits Tracker"
     VERSION: str = "1.0.0"
-    API_V1_STR: str = "/api/v1"
+    API_VERSION_STR: str = "/api/v1"
     API_URL_PREFIX: str = "http://localhost:8000"
     
     # Окружение

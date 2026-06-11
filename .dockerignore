@@ -1,0 +1,29 @@
+# Виртуальное окружение
+myenv/
+venv/
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Тесты и документация (не нужны в продакшен-образе)
+tests/
+docs/
+*.md
+
+# Docker
+Dockerfile
+docker-compose*.yml
+
+requirements/*.in
+requirements/dev.txt
